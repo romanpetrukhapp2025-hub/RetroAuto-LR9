@@ -33,3 +33,39 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
  form.addEventListener('submit',e=>{e.preventDefault();let allValid=true,firstInvalid=null;Object.keys(fields).forEach(key=>{fields[key].dataset.touched='true';if(!validate(key)){allValid=false;firstInvalid??=fields[key]}});if(!allValid){firstInvalid.focus();return;}form.reset();Object.values(fields).forEach(f=>{f.dataset.touched='false';f.removeAttribute('aria-invalid');f.closest('.form-field').classList.remove('is-valid','is-invalid')});showModal();});
  close.addEventListener('click',hideModal);ok.addEventListener('click',hideModal);modal.addEventListener('click',e=>{if(e.target===modal)hideModal();});document.addEventListener('keydown',e=>{if(modal.hidden)return;if(e.key==='Escape')hideModal();if(e.key==='Tab'){const items=[close,ok];const i=items.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();ok.focus()}else if(!e.shiftKey&&i===items.length-1){e.preventDefault();close.focus()}}});
 })();
+
+// LR10: initialize CDN libraries after DOM is ready.
+document.addEventListener('DOMContentLoaded', () => {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof Swiper !== 'undefined') {
+    const carousel = new Swiper('.retro-swiper', {
+      slidesPerView: 1, spaceBetween: 18, speed: reducedMotion ? 0 : 550,
+      loop: true, grabCursor: true,
+      autoplay: reducedMotion ? false : { delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true },
+      navigation: { nextEl: '.gallery-next', prevEl: '.gallery-prev' },
+      pagination: { el: '.gallery-pagination', clickable: true },
+      keyboard: { enabled: true, onlyInViewport: true },
+      breakpoints: { 640: { slidesPerView: 2, spaceBetween: 20 }, 1024: { slidesPerView: 3, spaceBetween: 22 } },
+      a11y: { enabled: true, prevSlideMessage: 'Попередній слайд', nextSlideMessage: 'Наступний слайд' }
+    });
+    const play = document.querySelector('.gallery-play');
+    let paused = reducedMotion;
+    const sync = () => { play.textContent = paused ? 'Відтворити' : 'Пауза'; play.setAttribute('aria-pressed', String(paused)); };
+    sync();
+    if (reducedMotion) play.hidden = true;
+    play.addEventListener('click', () => { paused = !paused; if (paused) carousel.autoplay.stop(); else carousel.autoplay.start(); sync(); });
+    if (typeof Fancybox !== 'undefined') {
+      Fancybox.bind('[data-fancybox="retro-gallery"]', {
+        animated: !reducedMotion, showClass: reducedMotion ? false : 'f-fadeIn', hideClass: reducedMotion ? false : 'f-fadeOut',
+        Carousel: { transition: reducedMotion ? false : 'fade' }, Images: { zoom: !reducedMotion },
+        Toolbar: { display: { left: ['infobar'], middle: ['zoomIn', 'zoomOut', 'toggle1to1'], right: ['thumbs', 'close'] } },
+        on: { init: () => carousel.autoplay.stop(), destroy: () => { if (!paused) carousel.autoplay.start(); } }
+      });
+    }
+  } else if (typeof Fancybox !== 'undefined') {
+    Fancybox.bind('[data-fancybox="retro-gallery"]', { Images: { zoom: true } });
+  }
+  if (typeof Typed !== 'undefined' && !reducedMotion) {
+    new Typed('#typedSlogan', { strings: ['Стиль поза часом.', 'Історія у кожній деталі.', 'Створено для емоцій.'], typeSpeed: 55, backSpeed: 30, backDelay: 1900, loop: true, showCursor: true });
+  }
+});
